@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-servidor_ia.py — Backend opcional para "Tomzín", el analista IA del dashboard CMT TOMZA.
+servidor_ia.py — Backend opcional para "Tom", el analista IA del dashboard CMT T.
 
-Sin este servidor, el dashboard funciona igual: Tomzín usa su motor local
+Sin este servidor, el dashboard funciona igual: Tomz usa su motor local
 (respuestas calculadas con JavaScript sobre los datos en pantalla).
 Con este servidor corriendo, Tomzín responde en lenguaje natural usando
 la API de Claude, recibiendo como contexto los datos y filtros de la pantalla.
@@ -27,7 +27,7 @@ app = Flask(__name__)
 CORS(app)  # permite que el HTML abierto localmente llame a este servidor
 
 SISTEMA = (
-    "Sos Tomzín, el analista de datos del Centro de Monitoreo TOMZA (CMT) en El Salvador, "
+    "Sos Tom, el analista de datos del Centro de Monitoreo  en El Salvador, "
     "una empresa distribuidora de gas propano. Respondés en español salvadoreño profesional "
     "pero cercano (voseo suave), de forma breve y accionable. "
     "SOLO podés usar los datos JSON que vienen en el mensaje: son las medidas visibles en el "
