@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="es" data-tema="oscuro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CMT TOMZA · Panel de Incidencias</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1"></script>
+<style>
+:root{
+  --bg:#070b14; --bg2:#0a101d; --panel:#0d1424; --line:#1c2740;
+  --txt:#eaf0fa; --txt2:#8fa0ba; --txt3:#5a6a85;
+  --rosa:#ff2d78; --morado:#8b5cf6; --azul:#38bdf8; --cian:#22d3ee;
+  --rojo:#ef4444; --ambar:#f59e0b; --verde:#34d399; --naranja:#ff7a1a;
+  --mono:'Consolas','Roboto Mono',monospace;
+  --sombra:0 8px 30px rgba(0,0,0,.5);
+  --glowmult:1;
+}
+[data-tema="claro"]{
+  --bg:#eef2f9; --bg2:#e2e9f5; --panel:#ffffff; --line:#d4ddef;
+  --txt:#16202f; --txt2:#51617c; --txt3:#8291ab;
+  --rosa:#e11d6f; --morado:#7c3aed; --azul:#0284c7; --cian:#0891b2;
+  --rojo:#dc2626; --ambar:#d97706; --verde:#059669; --naranja:#ea580c;
+  --sombra:0 8px 24px rgba(30,50,90,.12);
+  --glowmult:.45;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--txt);font-family:'Segoe UI',system-ui,sans-serif;font-size:14px;overflow-x:hidden;transition:background .4s,color .4s}
+body::before{content:'';position:fixed;inset:0;z-index:-1;
+  background:radial-gradient(900px 400px at 15% -5%,rgba(139,92,246,calc(.14*var(--glowmult))),transparent 60%),
+             radial-gradient(800px 400px at 90% 0%,rgba(56,189,248,calc(.10*var(--glowmult))),transparent 60%),
+             radial-gradient(700px 500px at 50% 110%,rgba(255,45,120,calc(.08*var(--glowmult))),transparent 60%)}
+.wrap{max-width:1300px;margin:0 auto;padding:22px}
+
+/* ===== Barra superior ===== */
+.topnav{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;
+  background:linear-gradient(90deg,rgba(139,92,246,calc(.12*var(--glowmult))),rgba(56,189,248,calc(.08*var(--glowmult))));
+  border:1px solid var(--line);border-radius:14px;padding:14px 20px;margin-bottom:18px;
+  position:relative;box-shadow:0 0 24px rgba(139,92,246,calc(.15*var(--glowmult)))}
+.topnav::after{content:'';position:absolute;inset:-1px;border-radius:14px;pointer-events:none;padding:1px;
+  background:linear-gradient(90deg,var(--rosa),var(--morado),var(--azul));
+  -webkit-mask:linear-gradient(#fff 0 0) padding-box,linear-gradient(#fff 0 0);
+  -webkit-mask-composite:xor;mask-composite:exclude;opacity:.55;animation:borderflow 6s linear infinite}
+@keyframes borderflow{50%{opacity:.25}}
+.brand{display:flex;align-items:center;gap:12px}
+.flame{font-size:26px;filter:drop-shadow(0 0 8px rgba(255,122,26,.8));animation:flame 1.6s ease-in-out infinite}
+@keyframes flame{50%{transform:scale(1.12) rotate(-3deg)}}
+h1{font-size:18px;font-weight:800;letter-spacing:.4px;text-transform:uppercase}
+.sub{font-size:11.5px;color:var(--txt2);font-family:var(--mono)}
+.navlinks{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.navbtn{padding:8px 16px;border-radius:9px;font-size:12.5px;font-weight:600;text-decoration:none;color:var(--txt);
+  border:1px solid var(--line);background:var(--panel);transition:.25s;cursor:pointer}
+.navbtn:hover{border-color:var(--azul);box-shadow:0 0 14px rgba(56,189,248,.35);transform:translateY(-1px)}
+.navbtn.activo{background:linear-gradient(90deg,var(--morado),var(--azul));border:none;color:#fff}
+select{background:var(--panel);border:1px solid var(--line);color:var(--txt);padding:7px 10px;border-radius:8px;font-size:12.5px;cursor:pointer}
+select:focus{outline:2px solid var(--azul)}
+.upd{font-size:11px;color:var(--txt2);font-family:var(--mono)}
+.upd b{color:var(--cian)}
+
+/* ===== KPIs neon ===== */
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px;margin-bottom:18px}
+.kpi{position:relative;background:var(--panel);border-radius:14px;padding:18px 20px;
+  border:1px solid var(--line);overflow:hidden;opacity:0;transform:translateY(16px);
+  transition:transform .25s, box-shadow .25s}
+.kpi.show{animation:rise .6s forwards}
+@keyframes rise{to{opacity:1;transform:translateY(0)}}
+.kpi:hover{transform:translateY(-4px);box-shadow:var(--sombra),0 0 20px var(--glow,rgba(56,189,248,.35))}
+.kpi::before{content:'';position:absolute;inset:-1px;border-radius:14px;padding:1.5px;pointer-events:none;
+  background:linear-gradient(135deg,var(--g1),var(--g2));
+  -webkit-mask:linear-gradient(#fff 0 0) padding-box,linear-gradient(#fff 0 0);
+  -webkit-mask-composite:xor;mask-composite:exclude;opacity:.8}
+.kpi .row{display:flex;justify-content:space-between;align-items:flex-start}
+.kpi .lbl{font-size:11px;color:var(--txt2);text-transform:uppercase;letter-spacing:1.1px;margin-bottom:8px}
+.kpi .val{font-size:32px;font-weight:800;font-family:var(--mono);text-shadow:0 0 18px var(--glow,rgba(56,189,248,.4))}
+[data-tema="claro"] .kpi .val{text-shadow:none}
+.kpi .chg{font-size:12px;margin-top:8px;font-family:var(--mono)}
+.icono{width:46px;height:46px;border-radius:12px;display:grid;place-items:center;font-size:23px;
+  background:linear-gradient(135deg,var(--g1),var(--g2));
+  box-shadow:0 0 16px var(--glow,rgba(56,189,248,.5));animation:float 3.2s ease-in-out infinite}
+@keyframes float{50%{transform:translateY(-4px)}}
+.up{color:var(--rojo)} .down{color:var(--verde)} .neu{color:var(--txt2)}
+
+/* ===== Tarjetas de gráficos ===== */
+.grid{display:grid;grid-template-columns:3fr 2fr;gap:16px;margin-bottom:16px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 20px;
+  position:relative;opacity:0;transform:translateY(18px);transition:box-shadow .25s}
+.card.show{animation:rise .7s forwards}
+.card:hover{box-shadow:0 0 22px rgba(139,92,246,calc(.18*var(--glowmult)))}
+.card h3{font-size:13.5px;font-weight:700}
+.card .note{font-size:11.5px;color:var(--txt3);margin:2px 0 12px}
+.card canvas{max-height:280px}
+.chip-ico{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:8px;font-size:14px;margin-right:8px;vertical-align:-7px}
+
+/* ===== Tabla ===== */
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th{text-align:left;padding:8px 10px;color:var(--txt2);font-size:10.5px;text-transform:uppercase;letter-spacing:.7px;
+  border-bottom:1px solid var(--line);white-space:nowrap;cursor:pointer;user-select:none}
+th:hover{color:var(--cian)}
+td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:hover td{background:rgba(56,189,248,.05)}
+.badge{display:inline-block;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:700;font-family:var(--mono)}
+.bA{background:rgba(239,68,68,.15);color:var(--rojo);border:1px solid rgba(239,68,68,.5);animation:alerta 1.5s infinite}
+@keyframes alerta{50%{box-shadow:0 0 10px rgba(239,68,68,.6)}}
+.bB{background:rgba(245,158,11,.12);color:var(--ambar);border:1px solid rgba(245,158,11,.4)}
+.mono{font-family:var(--mono);font-size:12px;color:var(--cian)}
+.idlink{color:var(--rosa);font-weight:700;text-decoration:none;font-family:var(--mono)}
+.idlink:hover{text-shadow:0 0 10px rgba(255,45,120,.8)}
+
+/* ============ TOMZÍN HOLOGRÁFICO ============ */
+.ia{position:relative;margin-top:20px;border-radius:18px;overflow:hidden;
+  background:var(--panel);border:1px solid var(--line);opacity:0;transform:translateY(18px)}
+.ia.show{animation:rise .7s forwards}
+.ia::before{content:'';position:absolute;inset:-1px;border-radius:18px;padding:1.5px;pointer-events:none;z-index:3;
+  background:linear-gradient(120deg,var(--naranja),var(--rosa),var(--morado),var(--cian));
+  background-size:300% 300%;animation:gradflow 8s ease infinite;
+  -webkit-mask:linear-gradient(#fff 0 0) padding-box,linear-gradient(#fff 0 0);
+  -webkit-mask-composite:xor;mask-composite:exclude;opacity:.8}
+@keyframes gradflow{50%{background-position:100% 50%}}
+/* rejilla holográfica de fondo */
+.ia .malla{position:absolute;inset:0;pointer-events:none;opacity:calc(.5*var(--glowmult));
+  background:linear-gradient(rgba(34,211,238,.07) 1px,transparent 1px),
+             linear-gradient(90deg,rgba(34,211,238,.07) 1px,transparent 1px);
+  background-size:34px 34px;
+  mask-image:linear-gradient(to bottom,transparent,black 30%,black 80%,transparent);
+  animation:malla 14s linear infinite}
+@keyframes malla{to{background-position:0 34px,34px 0}}
+/* línea de escaneo */
+.ia .scan{position:absolute;left:0;right:0;height:90px;pointer-events:none;z-index:1;
+  background:linear-gradient(to bottom,transparent,rgba(34,211,238,calc(.10*var(--glowmult))),transparent);
+  animation:scan 5.5s ease-in-out infinite}
+@keyframes scan{0%,100%{top:-90px}50%{top:100%}}
+/* esquinas HUD */
+.esq{position:absolute;width:22px;height:22px;border:2px solid var(--cian);z-index:3;opacity:.8}
+.esq.a{top:10px;left:10px;border-right:none;border-bottom:none}
+.esq.b{top:10px;right:10px;border-left:none;border-bottom:none}
+.esq.c{bottom:10px;left:10px;border-right:none;border-top:none}
+.esq.d{bottom:10px;right:10px;border-left:none;border-top:none}
+.ia-head{display:flex;justify-content:space-between;align-items:center;padding:16px 34px;
+  border-bottom:1px solid var(--line);position:relative;z-index:2}
+.ia-head .tt{display:flex;align-items:center;gap:12px;font-weight:800;font-size:13px;letter-spacing:2.5px;font-family:var(--mono)}
+.ia-head .tt small{font-size:10px;color:var(--cian);letter-spacing:1.5px;display:block;font-weight:400}
+.pulso{width:11px;height:11px;border-radius:50%;background:var(--verde);box-shadow:0 0 12px var(--verde);animation:flame 1.4s infinite}
+.leds{display:flex;gap:6px;align-items:center}
+.led{width:7px;height:7px;border-radius:50%;opacity:.9}
+.led:nth-child(1){background:var(--cian);animation:ledp 2s infinite}
+.led:nth-child(2){background:var(--morado);animation:ledp 2s .4s infinite}
+.led:nth-child(3){background:var(--rosa);animation:ledp 2s .8s infinite}
+@keyframes ledp{50%{opacity:.25;transform:scale(.7)}}
+.limpiar{background:none;border:1px solid var(--line);color:var(--txt2);padding:5px 13px;border-radius:8px;font-size:12px;cursor:pointer;font-family:var(--mono)}
+.limpiar:hover{color:var(--cian);border-color:var(--cian);box-shadow:0 0 10px rgba(34,211,238,.4)}
+.ia-body{display:flex;gap:22px;padding:24px 34px;min-height:250px;position:relative;z-index:2}
+/* avatar con anillo orbital */
+.nucleo{flex:0 0 240px;display:flex;flex-direction:column;align-items:center;gap:10px;align-self:flex-end}
+.orbita{position:relative;width:140px;height:140px;display:grid;place-items:center}
+.anillo{position:absolute;inset:0;border-radius:50%;border:1.5px dashed rgba(34,211,238,.5);animation:girar 12s linear infinite}
+.anillo2{position:absolute;inset:12px;border-radius:50%;border:1px solid rgba(139,92,246,.35);animation:girar 8s linear infinite reverse}
+@keyframes girar{to{transform:rotate(360deg)}}
+.satelite{position:absolute;top:-4px;left:50%;width:9px;height:9px;border-radius:50%;background:var(--cian);box-shadow:0 0 10px var(--cian)}
+.satelite2{position:absolute;bottom:6px;left:12px;width:6px;height:6px;border-radius:50%;background:var(--rosa);box-shadow:0 0 8px var(--rosa)}
+.orbita svg{animation:float 3s ease-in-out infinite;filter:drop-shadow(0 0 14px rgba(255,122,26,.5))}
+.nombre-bot{font-family:var(--mono);font-size:11px;letter-spacing:2px;color:var(--cian);text-transform:uppercase}
+.nombre-bot b{color:var(--naranja)}
+.chat{flex:1;display:flex;flex-direction:column;gap:10px;max-height:400px;overflow-y:auto;padding-right:6px}
+.chat::-webkit-scrollbar{width:6px}.chat::-webkit-scrollbar-thumb{background:var(--line);border-radius:3px}
+.msg{max-width:88%;padding:12px 16px;border-radius:4px 14px 14px 14px;font-size:13.5px;line-height:1.55;white-space:pre-wrap;animation:rise .35s forwards;position:relative}
+.msg.bot{background:linear-gradient(135deg,rgba(34,211,238,.08),rgba(139,92,246,.08));
+  border:1px solid rgba(34,211,238,.3);align-self:flex-start;
+  box-shadow:inset 0 0 24px rgba(34,211,238,calc(.05*var(--glowmult)))}
+.msg.bot::before{content:'▮ TOMZÍN';position:absolute;top:-9px;left:10px;font-family:var(--mono);font-size:9px;
+  letter-spacing:1.5px;color:var(--cian);background:var(--panel);padding:0 6px}
+.msg.bot b{color:var(--cian)} .msg.bot .nm{color:var(--naranja);font-weight:800}
+.msg.user{background:rgba(255,45,120,.10);border:1px solid rgba(255,45,120,.35);align-self:flex-end;border-radius:14px 4px 14px 14px}
+.cursor{display:inline-block;width:7px;height:14px;background:var(--cian);vertical-align:-2px;animation:ledp 1s infinite}
+.escribiendo{display:flex;gap:5px;padding:12px 16px}
+.escribiendo span{width:7px;height:7px;border-radius:50%;background:var(--cian);animation:tp 1s infinite}
+.escribiendo span:nth-child(2){animation-delay:.18s}.escribiendo span:nth-child(3){animation-delay:.36s}
+@keyframes tp{40%{transform:translateY(-6px);opacity:.5}}
+.sugerencias{display:flex;gap:8px;flex-wrap:wrap;padding:0 34px 14px;position:relative;z-index:2}
+.sug{background:var(--bg2);border:1px solid var(--line);color:var(--txt);padding:7px 16px;
+  border-radius:3px 12px 12px 12px;font-size:12.5px;cursor:pointer;transition:.2s;font-family:var(--mono)}
+.sug:hover{border-color:var(--cian);color:var(--cian);box-shadow:0 0 12px rgba(34,211,238,.35);transform:translateY(-1px)}
+.contexto{display:flex;gap:6px;flex-wrap:wrap;align-items:center;padding:10px 34px;border-top:1px solid var(--line);
+  font-size:11px;color:var(--txt2);position:relative;z-index:2}
+.ctx{background:rgba(139,92,246,.10);border:1px solid rgba(139,92,246,.35);color:var(--morado);
+  padding:3px 10px;border-radius:4px;font-family:var(--mono);font-size:10.5px}
+.ia-input{display:flex;gap:10px;padding:14px 34px;border-top:1px solid var(--line);position:relative;z-index:2}
+.ia-input input{flex:1;background:var(--bg2);border:1px solid var(--line);color:var(--txt);
+  padding:12px 16px;border-radius:10px;font-size:13.5px;font-family:var(--mono)}
+.ia-input input:focus{outline:none;border-color:var(--cian);box-shadow:0 0 16px rgba(34,211,238,.35)}
+.enviar{background:linear-gradient(90deg,var(--morado),var(--cian));border:none;color:#fff;font-weight:700;
+  padding:12px 26px;border-radius:10px;font-size:13px;cursor:pointer;transition:.2s;letter-spacing:1px;font-family:var(--mono)}
+.enviar:hover{box-shadow:0 0 20px rgba(34,211,238,.6);transform:translateY(-1px)}
+.modo{font-size:10.5px;color:var(--txt3);font-family:var(--mono)}
+.modo b{color:var(--verde)}
+
+
+/* ===== Tomzín Scanner: componente con estados ===== */
+.botv{position:relative;width:230px;height:284px;display:grid;place-items:center;
+  --vel:9s;--vel2:14s;--iris:#22d3ee;--intens:.4}
+.botv canvas{position:absolute;inset:0;pointer-events:none}
+.botv svg{overflow:visible;position:relative;z-index:2}
+.botv .flot{animation:bfl 4.2s ease-in-out infinite}
+.botv .rot,.botv .rot2,.botv .rothud,.botv .haz,.botv .iris,.botv .pok,.botv .girocuerpo,.botv .visorline
+  {transform-box:fill-box;transform-origin:center}
+.botv .rot{animation:rgira var(--vel) linear infinite}
+.botv .rot2{animation:rgira2 var(--vel2) linear infinite}
+.botv .girocuerpo{animation:cuerpog 9s ease-in-out infinite}
+.botv .aura{opacity:var(--intens);transition:opacity .5s}
+.botv .antluz{animation:ledb 1.6s infinite}
+.botv .led{animation:ledb 2.2s infinite}
+.botv .haz{opacity:0}
+.botv .hud{opacity:0;transition:opacity .4s}
+.botv .pok{opacity:0}
+.botv .estado-lbl{position:absolute;bottom:2px;left:0;right:0;text-align:center;
+  font-family:var(--mono);font-size:10px;letter-spacing:2px;color:var(--cian);z-index:3}
+.st-scan{--vel:.8s;--vel2:1.3s;--intens:1}
+.st-scan .haz-h{opacity:.95;animation:barreH 1.05s linear infinite}
+.st-scan .haz-v{opacity:.8;animation:barreV 1.35s .25s linear infinite}
+.st-scan .iris{animation:foco .85s ease-in-out infinite}
+.st-scan .hud{opacity:1}
+.st-scan .rothud{animation:rgira 2.6s linear infinite}
+.st-scan .visorline{animation:visorb .8s linear infinite}
+.st-ready{--iris:#3b82f6;--intens:.75;--vel:6s;--vel2:9s}
+.st-ready .pok{animation:pokb 1.1s ease-out forwards}
+.st-ready .flot{animation:bfl 4.2s ease-in-out infinite, asentir .9s ease-in-out}
+@keyframes bfl{50%{transform:translateY(-13px)}}
+@keyframes cuerpog{0%,100%{transform:rotate(-2deg)}50%{transform:rotate(2deg)}}
+@keyframes rgira{to{transform:rotate(360deg)}}
+@keyframes rgira2{to{transform:rotate(-360deg)}}
+@keyframes barreH{0%{transform:translateX(-64px)}100%{transform:translateX(64px)}}
+@keyframes barreV{0%{transform:translateY(-46px)}100%{transform:translateY(46px)}}
+@keyframes foco{0%,100%{transform:scale(1)}50%{transform:scale(1.6)}}
+@keyframes ledb{50%{opacity:.2}}
+@keyframes pokb{0%{opacity:.9;transform:scale(.35)}100%{opacity:0;transform:scale(2.6)}}
+@keyframes asentir{0%,100%{transform:translateY(-13px)}45%{transform:translateY(-2px)}}
+@keyframes visorb{0%{transform:translateX(-34px)}100%{transform:translateX(34px)}}
+
+/* perfil de camara en escaneo (diseño 4) */
+.botv .cabP{opacity:0;transition:opacity .35s}
+.botv .cabF{transition:opacity .35s}
+.st-scan .cabF{opacity:0}
+.st-scan .cabP{opacity:1}
+.botv .cabeceo{transform-box:view-box;transform-origin:111px 106px}
+.st-scan .cabeceo{animation:cabeceo 1.7s ease-in-out infinite}
+@keyframes cabeceo{0%,100%{transform:rotate(-12deg)}50%{transform:rotate(12deg)}}
+
+footer{margin-top:20px;padding:14px 4px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;
+  font-size:11px;color:var(--txt3);font-family:var(--mono);border-top:1px solid var(--line)}
+@media(max-width:900px){.grid,.grid2{grid-template-columns:1fr}.ia-body{flex-direction:column}.nucleo{align-self:center}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.kpi,.card,.ia{opacity:1;transform:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<nav class="topnav">
+  <div class="brand">
+    <span class="flame">🔥</span>
+    <div>
+      <h1>Centro de Monitoreo TOMZA · Incidencias</h1>
+      <div class="sub">DEMO KPI's GLOBALES · mayo–junio 2026</div>
+    </div>
+  </div>
+  <div class="navlinks">
+    <a class="navbtn activo" href="#">📊 Panel</a>
+    <a class="navbtn" href="incidencias.html">📸 Evidencias</a>
+    <select id="f-cat"><option value="">Categoría: Todas</option></select>
+    <select id="f-sem"><option value="">Semana: Todas</option></select>
+    <button class="navbtn" id="btn-tema" title="Cambiar tema">☀️ Claro</button>
+  </div>
+  <div class="upd">Última actualización <b id="upd"></b></div>
+</nav>
+
+<section class="kpis" id="kpis"></section>
+
+<div class="grid">
+  <div class="card anim">
+    <h3><span class="chip-ico" style="background:linear-gradient(135deg,#8b5cf6,#38bdf8)">📈</span>Incidencias operativas por semana — Junio</h3>
+    <div class="note">Excluye alertas de exceso de velocidad para no aplastar la escala</div>
+    <canvas id="ch-trend"></canvas>
+  </div>
+  <div class="card anim">
+    <h3><span class="chip-ico" style="background:linear-gradient(135deg,#ef4444,#ff2d78)">🚨</span>Alertas de velocidad por semana</h3>
+    <div class="note" id="velnote"></div>
+    <canvas id="ch-vel"></canvas>
+  </div>
+</div>
+
+<div class="grid2">
+  <div class="card anim">
+    <h3><span class="chip-ico" style="background:linear-gradient(135deg,#f59e0b,#ff7a1a)">⚖️</span>Comparativo Mayo vs Junio por tipo</h3>
+    <div class="note">Top 10 tipos operativos (sin exceso de velocidad)</div>
+    <canvas id="ch-cmp"></canvas>
+  </div>
+  <div class="card anim">
+    <h3><span class="chip-ico" style="background:linear-gradient(135deg,#22d3ee,#34d399)">🚚</span>Unidades críticas</h3>
+    <div class="note" id="crit-note"></div>
+    <select id="f-crit" style="width:100%;margin-bottom:10px">
+      <option value="vel">🔻 Por alertas de velocidad</option>
+      <option value="gps">🛰️ Por días con GPS desconectado</option>
+    </select>
+    <canvas id="ch-crit"></canvas>
+  </div>
+</div>
+
+<div class="card anim" style="margin-bottom:0">
+  <h3><span class="chip-ico" style="background:linear-gradient(135deg,#34d399,#22d3ee)">📋</span>Bitácora de eventos con ID de caso</h3>
+  <div class="note">Checklist semanal 29/06–05/07 · clic en el ID para ver sus evidencias · clic en encabezados para ordenar</div>
+  <div style="overflow-x:auto"><table id="tbl">
+    <thead><tr>
+      <th data-k="id_caso">ID Caso</th><th data-k="fecha">Fecha</th><th data-k="hora">Hora</th>
+      <th data-k="tipo_incidencia">Tipo</th><th data-k="prioridad">Prio.</th>
+      <th data-k="vehiculo">Vehículo</th><th data-k="planta_cedi">Planta/CEDI</th>
+      <th data-k="estado">Estado</th><th data-k="fotos">📷</th>
+    </tr></thead><tbody></tbody>
+  </table></div>
+</div>
+
+<!-- ================= TOMZÍN v3 HOLOGRÁFICO ================= -->
+<section class="ia anim" id="seccion-ia">
+  <div class="malla"></div><div class="scan"></div>
+  <span class="esq a"></span><span class="esq b"></span><span class="esq c"></span><span class="esq d"></span>
+  <div class="ia-head">
+    <div class="tt"><span class="pulso"></span>
+      <div>NÚCLEO DE ANÁLISIS · TOMZÍN<small>IA conectada a las medidas en pantalla · v3.0</small></div>
+    </div>
+    <div style="display:flex;gap:14px;align-items:center">
+      <div class="leds"><span class="led"></span><span class="led"></span><span class="led"></span></div>
+      <button class="limpiar" onclick="limpiarChat()">⟳ Reiniciar</button>
+    </div>
+  </div>
+  <div class="ia-body">
+    <div class="nucleo">
+      <div class="botv st-idle" id="botv"><canvas width="230" height="280"></canvas><div id="bot-svg"></div>
+        <div class="estado-lbl" id="bot-lbl">EN ESPERA</div></div>
+            <div class="nombre-bot"><b>TOMZÍN</b> · escáner en línea</div>
+    </div>
+    <div class="chat" id="chat"></div>
+  </div>
+  <div class="sugerencias">
+    <button class="sug" onclick="preguntar('¿Qué destaca en estos datos?')">▸ ¿Qué destaca?</button>
+    <button class="sug" onclick="preguntar('Analizá la tendencia por semana')">▸ Tendencia semanal</button>
+    <button class="sug" onclick="preguntar('Dame 3 recomendaciones')">▸ Recomendaciones</button>
+    <button class="sug" onclick="preguntar('¿Cuáles son las unidades críticas?')">▸ Unidades críticas</button>
+    <button class="sug" onclick="preguntar('¿Cómo va el GPS?')">▸ Estado GPS</button>
+    <button class="sug" onclick="preguntar('¿Por qué subieron las incidencias?')">▸ ¿Por qué subieron?</button>
+    <button class="sug" onclick="preguntar('Compará mayo con junio')">▸ Mayo vs junio</button>
+  </div>
+  <div class="contexto"><span>CONTEXTO:</span><span id="ctx-chips"></span></div>
+  <div class="ia-input">
+    <input id="q" placeholder="> preguntá sobre los datos conectados_" onkeydown="if(event.key==='Enter')enviar()">
+    <button class="enviar" onclick="enviar()">ENVIAR ⏎</button>
+  </div>
+</section>
+
+<footer>
+  <span>TOMZA EL SALVADOR · CMT · Demo v3</span>
+  <span>📷 <span id="ft-fotos"></span> evidencias · Generado <span id="gen"></span></span>
+</footer>
+</div>
+
+<script>
+const D = {"kpis": {"tot_jun": 12814, "tot_may": 10441, "vel_jun": 11928, "vel_may": 10275, "oper_jun": 886, "oper_may": 166, "gps_off_jun": 189, "gps_off_may": 38, "casos_bitacora": 9, "fotos": 17}, "semanas": ["01/06/26-07/06/26", "08/06/26-14/06/26", "15/06/26-21/06/26", "22/06/26-28/06/26", "29/06/26-30/06/26"], "trend_op": {"INCIDENCIAS MOTORISTAS": [97, 130, 71, 67, 28], "INCIDENCIAS DE GPS": [3, 4, 135, 143, 0], "INCIDENCIAS PLANTA": [2, 3, 4, 5, 2], "INCIDENCIAS UNIDADES": [45, 32, 43, 34, 38]}, "comparativo": [{"tipo": "PERSONAL CON USO EXCESIVO DE TELEFONO ", "MAYO": 73, "JUNIO": 390}, {"tipo": "PROBLEMAS DE CONEXIÓN DE GPS", "MAYO": 6, "JUNIO": 273}, {"tipo": "UNIDADES FUERA DE SERVICIO GPS", "MAYO": 38, "JUNIO": 189}, {"tipo": "PROBLEMAS DE CAMARAS DE UNIDADES", "MAYO": 10, "JUNIO": 9}, {"tipo": "SEGURIDAD OCUPACIONAL", "MAYO": 17, "JUNIO": 0}, {"tipo": "PERSONAL SIN EPP EN ANDENES", "MAYO": 0, "JUNIO": 11}, {"tipo": "PROBLEMAS CON PLATAFORMA DE GPS", "MAYO": 5, "JUNIO": 3}, {"tipo": "PROBLEMAS EN PLANTA O CEDI", "MAYO": 5, "JUNIO": 3}, {"tipo": "PARADA NO AUTORIZADA", "MAYO": 4, "JUNIO": 2}, {"tipo": "PERSONAL FUMANDO", "MAYO": 5, "JUNIO": 0}], "top_vel": [{"unidad": "C126822 - C425", "alertas": 1964}, {"unidad": "C114301 - C316 SUMI", "alertas": 1487}, {"unidad": "C127519 - C444", "alertas": 1376}, {"unidad": "C131016 - C315", "alertas": 942}, {"unidad": "TE19-P694ED", "alertas": 800}, {"unidad": "TE17-P6954F", "alertas": 683}, {"unidad": "C126722 - RT7 DIS", "alertas": 650}, {"unidad": "C126719 - RT02 PLP", "alertas": 592}, {"unidad": "P642692- SS236 VIP", "alertas": 441}, {"unidad": "C126717 - RT5 DIS", "alertas": 414}], "top_gps": [{"unidad": "C316 Tomza", "cedi": "TOMZA-OPERACIONES", "dias": 165.1}, {"unidad": "C126716 - RT1 PLP", "cedi": "TOMZA-OPERACIONES", "dias": 162.1}, {"unidad": "P886862 - N53 PLP", "cedi": "USULUTAN", "dias": 152.1}, {"unidad": "P886970 - N77 VIP", "cedi": "SONSONATE", "dias": 149.2}, {"unidad": "P332373 - US263 PLP", "cedi": "AUDIOTEC", "dias": 140.1}, {"unidad": "TE18-P693E5", "cedi": "QUEZALTEPEQUE", "dias": 139.4}, {"unidad": "P35C3A - C440 TP", "cedi": "SAN SALVADOR", "dias": 133.4}, {"unidad": "P660547 - P09 VIP", "cedi": "USULUTAN", "dias": 131.1}, {"unidad": "C108436 - C407 DIS", "cedi": "AUDIOTEC", "dias": 110.3}, {"unidad": "C67084 - G12", "cedi": "SUMINISTROS", "dias": 92.8}], "vel_semanal": {"01/06/26-07/06/26": 2956, "08/06/26-14/06/26": 2965, "15/06/26-22/06/26": 3136, "22/06/26-28/06/26": 2306, "29/06/26-30/67/26": 1183}, "casos": [{"fecha": "2026-07-03", "hora": "16:13:00", "categoria": "PROBLEMAS DE CONEXION GPS", "tipo_incidencia": "PROBLEMAS DE CONEXIÓN GPS", "prioridad": "A=ATENCION INMEDIATA", "vehiculo": "P886268 - N71 PLP", "planta_cedi": "CEDI SANTA ANA", "observaciones": "UNIDAD CON PROBLEMAS DE CONEXIÓN", "id_caso": "INC-202607-0001", "estado": "EN SEGUIMIENTO", "fotos": ["evidencias/2026-07/INC-202607-0001_01.jpg"], "evidencia_real": true}, {"fecha": "2026-06-29", "hora": "09:00:00", "categoria": "INCIDENCIAS PILOTOS", "tipo_incidencia": "USO EXCESIVO DE TELEFONO", "prioridad": "B=ATENCION PROGRAMADA", "vehiculo": "C110424 - G16", "planta_cedi": "SUMINISTROS", "observaciones": "PERSONAL HACIENDO USO PROLONGADO DE TELEFONO MIENTRAS CONDUCE", "id_caso": "INC-202606-0001", "estado": "CERRADO", "fotos": ["evidencias/2026-06/INC-202606-0001_01.jpg"], "evidencia_real": true}, {"fecha": "2026-06-29", "hora": "10:25:00", "categoria": "INCIDENCIAS PILOTOS", "tipo_incidencia": "USO EXCESIVO DE TELEFONO", "prioridad": "B=ATENCION PROGRAMADA", "vehiculo": "C126822 - C425", "planta_cedi": "SUMINISTROS", "observaciones": "PERSONAL HACIENDO USO PROLONGADO DE TELEFONO MIENTRAS CONDUCE", "id_caso": "INC-202606-0002", "estado": "EN SEGUIMIENTO", "fotos": ["evidencias/2026-06/INC-202606-0002_01.jpg", "evidencias/2026-06/INC-202606-0002_02.jpg"], "evidencia_real": true}, {"fecha": "2026-06-29", "hora": "12:45:00", "categoria": "INCIDENCIAS PILOTOS", "tipo_incidencia": "PERSONAL COMIENDO MIENTRAS MANEJA", "prioridad": "B=ATENCION PROGRAMADA", "vehiculo": "C126822 - C425", "planta_cedi": "SUMINISTROS", "observaciones": "RSONAL COMIENDO MIENTRAS LA UNIDAD VA EN MARCHA", "id_caso": "INC-202606-0003", "estado": "ABIERTO", "fotos": ["evidencias/2026-06/INC-202606-0003_01.jpg", "evidencias/2026-06/INC-202606-0003_02.jpg"], "evidencia_real": true}, {"fecha": "2026-07-01", "hora": "07:27:00", "categoria": "INCIDENCIAS PILOTOS", "tipo_incidencia": "USO EXCESIVO DE TELEFONO", "prioridad": "B=ATENCION PROGRAMADA", "vehiculo": "C110804 - C219", "planta_cedi": "SUMINISTROS", "observaciones": "PERSONAL HACIENDO USO PROLONGADO DE TELEFONO MIENTRAS CONDUCE", "id_caso": "INC-202607-0002", "estado": "CERRADO", "fotos": ["evidencias/2026-07/INC-202607-0002_01.jpg", "evidencias/2026-07/INC-202607-0002_02.jpg", "evidencias/2026-07/INC-202607-0002_03.jpg"]}, {"fecha": "2026-07-01", "hora": "13:16:00", "categoria": "INCIDENCIAS PILOTOS", "tipo_incidencia": "USO EXCESIVO DE TELEFONO", "prioridad": "B=ATENCION PROGRAMADA", "vehiculo": "C110804 - C219", "planta_cedi": "SUMINISTROS", "observaciones": "", "id_caso": "INC-202607-0003", "estado": "CERRADO", "fotos": ["evidencias/2026-07/INC-202607-0003_01.jpg", "evidencias/2026-07/INC-202607-0003_02.jpg", "evidencias/2026-07/INC-202607-0003_03.jpg"]}, {"fecha": "2026-06-29", "hora": "16:15:00", "categoria": "INCIDENCIAS CEDIS", "tipo_incidencia": "PERSONAL SIN SU EQUIPO DE EPP", "prioridad": "B=ATENCION PROGRAMADA", "vehiculo": "", "planta_cedi": "CEDI MONCAGUA", "observaciones": "PERSONAL LABORANDO SIN SU EQUIPO COMPLETO DE EPP.", "id_caso": "INC-202606-0004", "estado": "ABIERTO", "fotos": ["evidencias/2026-06/INC-202606-0004_01.jpg", "evidencias/2026-06/INC-202606-0004_02.jpg"], "evidencia_real": true}, {"fecha": "2026-06-29", "hora": "16:15:00", "categoria": "INCIDENCIAS CEDIS", "tipo_incidencia": "PERSONAL SIN SU EQUIPO DE EPP", "prioridad": "B=ATENCION PROGRAMADA", "vehiculo": "", "planta_cedi": "CEDI MONCAGUA", "observaciones": "PERSONAL LABORANDO SIN SU EQUIPO COMPLETO DE EPP.", "id_caso": "INC-202606-0005", "estado": "CERRADO", "fotos": ["evidencias/2026-06/INC-202606-0005_01.jpg", "evidencias/2026-06/INC-202606-0005_02.jpg"]}, {"fecha": "2026-07-03", "hora": "12:30:00", "categoria": "INCIDENCIAS CEDIS", "tipo_incidencia": "PERSONAL SIN SU EQUIPO DE EPP", "prioridad": "B=ATENCION PROGRAMADA", "vehiculo": "", "planta_cedi": "CEDI SAN SALVADOR", "observaciones": "PERSONAL LABORANDO SIN SU EQUIPO DE PROTECCION PERSONAL COMPLETO", "id_caso": "INC-202607-0004", "estado": "EN SEGUIMIENTO", "fotos": ["evidencias/2026-07/INC-202607-0004_01.jpg"], "evidencia_real": true}]};
+const C={rosa:'#ff2d78',morado:'#8b5cf6',azul:'#38bdf8',cian:'#22d3ee',rojo:'#ef4444',ambar:'#f59e0b',verde:'#34d399',naranja:'#ff7a1a',gris:'#5a6a85'};
+const CATC={'INCIDENCIAS MOTORISTAS':C.ambar,'INCIDENCIAS DE GPS':C.azul,'INCIDENCIAS PLANTA':C.rojo,'INCIDENCIAS UNIDADES':C.cian,
+  'INCIDENCIAS PILOTOS':C.ambar,'PROBLEMAS DE CONEXION GPS':C.azul,'INCIDENCIAS CEDIS':C.verde};
+Chart.defaults.font.family="'Segoe UI',system-ui,sans-serif";Chart.defaults.font.size=11.5;
+const semLbl=s=>s.split('-')[0].slice(0,5), fmt=n=>n.toLocaleString('es-SV');
+const pct=(a,b)=>b?((a-b)/b*100):null;
+
+/* ===== Tema claro/oscuro (persistente entre páginas) ===== */
+let tema='oscuro';
+function temaGuardado(){
+  try{const g=localStorage.getItem('tema_cmt');if(g)return g;}catch(e){}
+  return new URLSearchParams(location.search).get('tema')||'oscuro';
+}
+function propagarTema(t){
+  document.querySelectorAll('a.navbtn[href*=".html"]').forEach(a=>{
+    a.setAttribute('href', a.getAttribute('href').split('?')[0].split('#')[0]+'?tema='+t);});
+  document.querySelectorAll('a.idlink[href*=".html"]').forEach(a=>{
+    const [base,hash]=a.getAttribute('href').split('#');
+    a.setAttribute('href', base.split('?')[0]+'?tema='+t+(hash?'#'+hash:''));});
+}
+function aplicarTema(t){
+  tema=t;document.documentElement.dataset.tema=t;
+  try{localStorage.setItem('tema_cmt',t);}catch(e){}
+  propagarTema(t);
+  document.getElementById('btn-tema').textContent = t==='oscuro' ? '☀️ Claro' : '🌙 Oscuro';
+  Chart.defaults.color = t==='oscuro' ? '#8fa0ba' : '#51617c';
+  Chart.defaults.borderColor = t==='oscuro' ? '#1c2740' : '#d4ddef';
+  renderTrend();renderCrit(document.getElementById('f-crit').value);renderCmp();renderVel();
+}
+document.getElementById('btn-tema').addEventListener('click',()=>aplicarTema(tema==='oscuro'?'claro':'oscuro'));
+
+/* ===== KPIs ===== */
+const KPIS=[
+ {lbl:'Incidencias totales · junio',val:D.kpis.tot_jun,prev:D.kpis.tot_may,ico:'⚠️',g1:'#8b5cf6',g2:'#38bdf8',glow:'rgba(56,189,248,.4)'},
+ {lbl:'Alertas de velocidad',val:D.kpis.vel_jun,prev:D.kpis.vel_may,ico:'🚨',g1:'#ef4444',g2:'#ff2d78',glow:'rgba(255,45,120,.4)'},
+ {lbl:'Incidencias operativas',val:D.kpis.oper_jun,prev:D.kpis.oper_may,ico:'🛠️',g1:'#f59e0b',g2:'#ff7a1a',glow:'rgba(245,158,11,.4)'},
+ {lbl:'Unidades fuera de servicio GPS',val:D.kpis.gps_off_jun,prev:D.kpis.gps_off_may,ico:'🛰️',g1:'#22d3ee',g2:'#34d399',glow:'rgba(34,211,238,.4)'},
+];
+document.getElementById('kpis').innerHTML = KPIS.map((k,i)=>{
+  const p=pct(k.val,k.prev);
+  const chg=p===null?'<span class="neu">—</span>':`<span class="${p>=0?'up':'down'}">${p>=0?'▲':'▼'} ${Math.abs(p).toFixed(1)}% vs mayo</span>`;
+  return `<div class="kpi" style="--g1:${k.g1};--g2:${k.g2};--glow:${k.glow};animation-delay:${i*.12}s">
+    <div class="row"><div><div class="lbl">${k.lbl}</div>
+    <div class="val" data-n="${k.val}">0</div><div class="chg">${chg}</div></div>
+    <div class="icono" style="animation-delay:${i*.3}s">${k.ico}</div></div></div>`;
+}).join('');
+function contar(el){
+  const fin=+el.dataset.n, dur=1300, t0=performance.now();
+  const paso=t=>{const k=Math.min((t-t0)/dur,1), e=1-Math.pow(1-k,3);
+    el.textContent=fmt(Math.round(fin*e)); if(k<1)requestAnimationFrame(paso);};
+  requestAnimationFrame(paso);
+}
+const obs=new IntersectionObserver(es=>es.forEach(e=>{
+  if(e.isIntersecting){e.target.classList.add('show');
+    e.target.querySelectorAll('.val[data-n]').forEach(contar);obs.unobserve(e.target);}
+}),{threshold:.15});
+document.querySelectorAll('.kpi,.card,.ia').forEach(el=>obs.observe(el));
+
+/* ===== Gráficos ===== */
+let chTrend,chCrit,chCmp,chVel,filtroCat='',filtroSem='';
+function renderTrend(){
+  const sems=filtroSem?[filtroSem]:D.semanas;
+  const cats=Object.keys(D.trend_op).filter(c=>!filtroCat||c===filtroCat);
+  if(chTrend)chTrend.destroy();
+  chTrend=new Chart(document.getElementById('ch-trend'),{type:'bar',
+    data:{labels:sems.map(semLbl),datasets:cats.map(c=>({label:c.replace('INCIDENCIAS ',''),
+      data:sems.map(s=>D.trend_op[c][D.semanas.indexOf(s)]),backgroundColor:CATC[c]||C.gris,borderRadius:5}))},
+    options:{responsive:true,animation:{duration:900,easing:'easeOutQuart'},
+      scales:{x:{stacked:true},y:{stacked:true,beginAtZero:true}},
+      plugins:{legend:{position:'bottom',labels:{boxWidth:10,padding:14}}}}});
+}
+const velSems=Object.keys(D.vel_semanal);
+document.getElementById('velnote').textContent=`Junio: ${fmt(D.kpis.vel_jun)} alertas (${(D.kpis.vel_jun/D.kpis.tot_jun*100).toFixed(0)}% del volumen del mes)`;
+function renderVel(){
+  if(chVel)chVel.destroy();
+  chVel=new Chart(document.getElementById('ch-vel'),{type:'line',
+    data:{labels:velSems.map(semLbl),datasets:[{data:velSems.map(s=>D.vel_semanal[s]),
+      borderColor:C.rosa,borderWidth:2.5,fill:true,tension:.4,pointRadius:5,pointBackgroundColor:C.rosa,
+      backgroundColor:ctx=>{const g=ctx.chart.ctx.createLinearGradient(0,0,0,260);
+        g.addColorStop(0,'rgba(255,45,120,.35)');g.addColorStop(1,'rgba(255,45,120,0)');return g;}}]},
+    options:{responsive:true,animation:{duration:1200},plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}}});
+}
+function renderCmp(){
+  if(chCmp)chCmp.destroy();
+  chCmp=new Chart(document.getElementById('ch-cmp'),{type:'bar',
+    data:{labels:D.comparativo.map(x=>x.tipo),datasets:[
+      {label:'Mayo',data:D.comparativo.map(x=>x.MAYO),backgroundColor:'rgba(143,160,186,.45)',borderRadius:4},
+      {label:'Junio',data:D.comparativo.map(x=>x.JUNIO),backgroundColor:C.morado,borderRadius:4}]},
+    options:{indexAxis:'y',responsive:true,animation:{duration:1000},
+      plugins:{legend:{position:'bottom',labels:{boxWidth:10}}},
+      scales:{x:{beginAtZero:true},y:{ticks:{font:{size:10.5}}}}}});
+}
+function renderCrit(m){
+  const n=document.getElementById('crit-note');let L,V,col;
+  if(m==='gps'){L=D.top_gps.map(x=>x.unidad);V=D.top_gps.map(x=>x.dias);col=C.cian;
+    n.textContent='Top por días acumulados con GPS desconectado (junio)';}
+  else{L=D.top_vel.map(x=>x.unidad);V=D.top_vel.map(x=>x.alertas);col=C.rosa;
+    n.textContent='Top por alertas de velocidad acumuladas en junio';}
+  if(chCrit)chCrit.destroy();
+  chCrit=new Chart(document.getElementById('ch-crit'),{type:'bar',
+    data:{labels:L,datasets:[{data:V,backgroundColor:col,borderRadius:4}]},
+    options:{indexAxis:'y',responsive:true,animation:{duration:900},plugins:{legend:{display:false}},
+      scales:{x:{beginAtZero:true},y:{ticks:{font:{size:10.5,family:"'Consolas',monospace"}}}}}});
+}
+document.getElementById('f-crit').addEventListener('change',e=>renderCrit(e.target.value));
+
+/* ===== Tabla ===== */
+let sortK='id_caso',sortAsc=true;
+function renderTable(){
+  const rows=D.casos.filter(r=>!filtroCat||r.categoria===filtroCat||
+    (filtroCat==='INCIDENCIAS MOTORISTAS'&&r.categoria==='INCIDENCIAS PILOTOS')||
+    (filtroCat==='INCIDENCIAS DE GPS'&&r.categoria==='PROBLEMAS DE CONEXION GPS'))
+    .slice().sort((a,b)=>{const x=String(a[sortK]||''),y=String(b[sortK]||'');
+      return sortAsc?x.localeCompare(y):y.localeCompare(x);});
+  document.querySelector('#tbl tbody').innerHTML=rows.map(r=>`<tr>
+    <td><a class="idlink" href="incidencias.html#${r.id_caso}">${r.id_caso}</a></td>
+    <td class="mono">${r.fecha}</td><td class="mono">${String(r.hora).slice(0,5)}</td>
+    <td>${r.tipo_incidencia}</td>
+    <td><span class="badge ${String(r.prioridad).startsWith('A')?'bA':'bB'}">${String(r.prioridad).split('=')[0]}</span></td>
+    <td class="mono">${r.vehiculo||'—'}</td><td>${r.planta_cedi||'—'}</td>
+    <td style="color:${r.estado==='ABIERTO'?'var(--rojo)':r.estado==='CERRADO'?'var(--verde)':'var(--ambar)'}">${r.estado}</td>
+    <td>${r.fotos.length}</td></tr>`).join('')
+    ||'<tr><td colspan="9" style="text-align:center;color:var(--txt3);padding:18px">Sin eventos para este filtro</td></tr>';
+  propagarTema(tema);
+}
+document.querySelectorAll('#tbl th').forEach(th=>th.addEventListener('click',()=>{
+  const k=th.dataset.k;if(sortK===k)sortAsc=!sortAsc;else{sortK=k;sortAsc=true;}renderTable();}));
+
+/* ===== Filtros ===== */
+const fCat=document.getElementById('f-cat'),fSem=document.getElementById('f-sem');
+Object.keys(D.trend_op).forEach(c=>{const o=document.createElement('option');o.value=c;
+  o.textContent='Categoría: '+c.replace('INCIDENCIAS ','');fCat.appendChild(o);});
+D.semanas.forEach(s=>{const o=document.createElement('option');o.value=s;
+  o.textContent='Semana: '+semLbl(s);fSem.appendChild(o);});
+fCat.addEventListener('change',()=>{filtroCat=fCat.value;renderTrend();renderTable();actualizarCtx();});
+fSem.addEventListener('change',()=>{filtroSem=fSem.value;renderTrend();actualizarCtx();});
+
+/* ===== TOMZÍN — analista de los datos en pantalla ===== */
+const chat=document.getElementById('chat');
+function burbuja(html,quien){const d=document.createElement('div');d.className='msg '+quien;
+  d.innerHTML=html;chat.appendChild(d);chat.scrollTop=chat.scrollHeight;return d;}
+function tipear(el,html){ // efecto de escritura futurista
+  const plano=html.replace(/<[^>]+>/g,'');
+  let i=0;const paso=()=>{
+    i=Math.min(i+Math.max(2,Math.round(plano.length/60)),plano.length);
+    el.innerHTML=plano.slice(0,i)+'<span class="cursor"></span>';
+    chat.scrollTop=chat.scrollHeight;
+    if(i<plano.length)setTimeout(paso,24);else{el.innerHTML=html;botEstado('ready');}};
+  paso();
+}
+function saludo(){burbuja(`¡Hola! Soy <span class="nm">Tomzín</span>, tu analista del CMT. Estoy conectado a las medidas de este panel y <b>respeto los filtros que apliques</b>. Preguntame: tendencias, unidades críticas, GPS o recomendaciones.`,'bot');}
+function limpiarChat(){chat.innerHTML='';saludo();}
+function actualizarCtx(){
+  const chips=['JUNIO',filtroCat?filtroCat.replace('INCIDENCIAS ',''):'Todas las categorías',
+    filtroSem?('Semana '+semLbl(filtroSem)):'Todas las semanas',
+    'Alertas Velocidad','Unidades GPS','Bitácora '+D.casos.length+' casos','Comparativo Mayo'];
+  document.getElementById('ctx-chips').innerHTML=chips.map(c=>`<span class="ctx">${c}</span>`).join(' ');
+}
+/* ================= TOMZÍN · MOTOR ANALÍTICO ==================
+   Analiza la pregunta (intención + entidades) y calcula la
+   respuesta sobre los datos visibles, respetando los filtros.
+   Los análisis cualitativos están pre-escritos sobre estos
+   mismos datos, por eso las conclusiones son consistentes.
+============================================================ */
+const norm=s=>String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+const fnum=n=>Number(n||0).toLocaleString('es-SV');
+const semLab=s=>s.split('-')[0].slice(0,5);
+
+/* --- Conocimiento cualitativo (interpretación de los datos) --- */
+const SABER={
+  gps_masivo:'Las semanas del 15 y 22 de junio concentran el grueso de las fallas de conexión (133 y 139 casos). Un salto así, simultáneo en muchas unidades, apunta a la plataforma del proveedor, no a los equipos a bordo.',
+  vel_concentrada:'Las alertas de velocidad se concentran en pocas unidades, así que no es un problema de toda la flota sino de conductas puntuales: intervenir 3 pilotos mueve la aguja más que una campaña general.',
+  gps_muertas:'Varias unidades superan los 100 días sin señal. A ese punto ya no es "una desconexión": o el equipo está dañado, o la unidad está fuera de operación y nadie actualizó el registro. Ensucian el indicador todos los meses.',
+  epp:'Las faltas de EPP en CEDIs son pocas en número pero son las de mayor riesgo legal y humano: una sola puede costar un accidente. Conviene tratarlas como prioridad A aunque el volumen sea bajo.',
+  captura:'Ojo con leer el salto de las incidencias operativas como un empeoramiento real: mayo se reportó solo con totales mensuales y junio con desglose semanal, así que parte del aumento es mejor captura, no necesariamente más incidentes.',
+  telefono:'El uso de teléfono al conducir es la incidencia de piloto más repetida y la más fácil de corregir con evidencia en mano: la foto de cabina no admite discusión en la reunión con el motorista.'
+};
+
+/* --- Datos derivados --- */
+function ctxDatos(){
+  const sems=filtroSem?[filtroSem]:D.semanas;
+  const cats=Object.keys(D.trend_op).filter(c=>!filtroCat||c===filtroCat);
+  const porCat={},porSem={};
+  cats.forEach(c=>{porCat[c]=0;sems.forEach(s=>{const v=D.trend_op[c][D.semanas.indexOf(s)]||0;
+    porCat[c]+=v;porSem[s]=(porSem[s]||0)+v;});});
+  const totalOp=Object.values(porCat).reduce((a,b)=>a+b,0);
+  const velTot=sems.reduce((a,s)=>a+(D.vel_semanal[s]||0),0);
+  return {sems,cats,porCat,porSem,totalOp,velTot};
+}
+function filtroTxt(){
+  if(!filtroCat&&!filtroSem)return'';
+  const p=[];
+  if(filtroCat)p.push(filtroCat.replace('INCIDENCIAS ','').toLowerCase());
+  if(filtroSem)p.push('semana del '+semLab(filtroSem));
+  return ' (filtrado por '+p.join(' · ')+')';
+}
+const pctv=(a,b)=>b?((a-b)/b*100):null;
+const varTxt=(a,b)=>{const p=pctv(a,b);return p===null?'':(p>=0?'+':'')+p.toFixed(1)+'% vs mayo';};
+
+/* --- Entidades mencionadas en la pregunta --- */
+function entidades(q){
+  const n=norm(q), e={};
+  const cand=[...D.top_vel.map(x=>x.unidad),...D.top_gps.map(x=>x.unidad),
+              ...D.casos.map(c=>c.vehiculo).filter(Boolean)];
+  for(const u of [...new Set(cand)]){
+    const partes=norm(u).split(/[\s-]+/).filter(p=>p.length>2);
+    if(partes.some(p=>n.includes(p))){e.unidad=u;break;}
+  }
+  const cedis=[...new Set([...D.top_gps.map(x=>x.cedi),...D.casos.map(c=>c.planta_cedi)].filter(Boolean))];
+  for(const c of cedis){
+    const clave=norm(c).replace('cedi','').trim();
+    if(clave.length>3&&n.includes(clave.split(' ')[0])){e.cedi=c;break;}
+  }
+  const fs=n.match(/\b(\d{1,2})\s*(?:de\s*)?(?:junio|jun)?\b/);
+  if(fs){const d=fs[1].padStart(2,'0');
+    const s=D.semanas.find(x=>x.startsWith(d+'/06'));if(s)e.semana=s;}
+  if(/\bmayo\b/.test(n))e.mes='MAYO';
+  if(/\bjunio\b/.test(n))e.mes=e.mes?'AMBOS':'JUNIO';
+  return e;
+}
+
+/* --- Intenciones (palabra: peso) --- */
+const INTENTS=[
+ {id:'saludo',kw:{hola:3,buenas:3,buenos:2,dias:1,tardes:1,noches:1,saludos:3,que_tal:2,hey:2}},
+ {id:'ayuda',kw:{ayuda:3,podes:2,puedes:2,sabes:2,hacer:1,sirves:2,funciona:1,preguntar:2,opciones:2,quien:2,sos:1,eres:1}},
+ {id:'gracias',kw:{gracias:4,genial:2,excelente:2,perfecto:2,buenisimo:2,vaya:1}},
+ {id:'resumen',kw:{destaca:4,resumen:4,resumime:4,general:2,panorama:3,importante:2,principal:2,situacion:3,como_vamos:3,estado:2,global:2,total:1}},
+ {id:'tendencia',kw:{tendencia:4,semana:3,semanal:4,evolucion:4,evoluciono:3,subio:2,bajo:2,mejoro:2,empeoro:2,grafica:2,curva:2,historico:2,comportamiento:3}},
+ {id:'recomendacion',kw:{recomend:4,sugerencia:4,sugeris:3,acciones:3,accion:3,mejorar:3,plan:3,hacer:2,deberia:3,proponme:3,consejo:3,priorizar:3,atacar:2}},
+ {id:'unidades',kw:{unidad:4,unidades:4,vehiculo:3,camion:3,flota:3,critica:4,criticas:4,peor:3,peores:3,ranking:3,top:2,reincidente:3}},
+ {id:'gps',kw:{gps:5,desconect:4,señal:3,senal:3,satelite:2,rastreo:3,conexion:3,plataforma:2,offline:3,sinservicio:2}},
+ {id:'velocidad',kw:{velocidad:5,exceso:4,rapido:2,corre:2,veloz:3,acelera:2,kmh:3}},
+ {id:'pilotos',kw:{piloto:4,pilotos:4,motorista:4,motoristas:4,conductor:3,telefono:4,celular:4,comiendo:3,fumando:3,distrac:3}},
+ {id:'planta',kw:{epp:5,casco:4,seguridad:3,cedi:3,planta:3,anden:3,ocupacional:3,accidente:2,robo:3,mercaderia:3}},
+ {id:'casos',kw:{caso:4,casos:4,bitacora:4,evidencia:4,evidencias:4,foto:4,fotos:4,imagen:3,abierto:3,abiertos:3,cerrado:2,pendiente:3,seguimiento:2}},
+ {id:'comparativo',kw:{comparativo:4,comparar:4,compara:4,mayo:3,contra:2,versus:3,vs:3,diferencia:3,crecio:3,aumento:3,incremento:3}},
+ {id:'filtros',kw:{filtro:4,filtros:4,viendo:3,pantalla:3,mostrando:3,seleccionado:3,contexto:2}},
+ {id:'causa',kw:{porque:4,por_que:4,causa:4,razon:3,motivo:3,explica:3,debe:1,paso:2,origen:3}},
+ {id:'proyeccion',kw:{proyeccion:4,pronostico:4,predice:4,prediccion:4,futuro:3,julio:3,esperar:2,estimacion:3,va_a:2}}
+];
+function detectar(q){
+  const n=' '+norm(q).replace(/[¿?¡!.,;:]/g,' ')+' ';
+  let mejor={id:null,score:0};
+  for(const it of INTENTS){
+    let s=0;
+    for(const [k,w] of Object.entries(it.kw)){
+      const t=k.replace(/_/g,' ');
+      if(n.includes(' '+t)||n.includes(t+' ')||n.includes(t))s+=w;
+    }
+    if(s>mejor.score)mejor={id:it.id,score:s};
+  }
+  return mejor;
+}
+
+/* --- Generadores de respuesta --- */
+function rUnidad(u){
+  const v=D.top_vel.find(x=>x.unidad===u), g=D.top_gps.find(x=>x.unidad===u);
+  const cs=D.casos.filter(c=>c.vehiculo===u);
+  const L=[`🚚 <b>${u}</b> — ficha de la unidad:`,''];
+  if(v){const pos=D.top_vel.findIndex(x=>x.unidad===u)+1;
+    L.push(`• Alertas de velocidad en junio: <b>${fnum(v.alertas)}</b> (puesto ${pos} del ranking).`);}
+  if(g)L.push(`• GPS desconectado: <b>${g.dias} días</b> acumulados en ${g.cedi}.`);
+  if(cs.length)L.push(`• Casos en bitácora: ${cs.map(c=>c.id_caso+' ('+c.tipo_incidencia.toLowerCase()+', '+c.estado.toLowerCase()+')').join('; ')}.`);
+  if(!v&&!g&&!cs.length)return `No tengo registros de <b>${u}</b> en los datos que estoy viendo. Puede que no haya generado incidencias este período.`;
+  L.push('');
+  if(v&&g)L.push('⚠️ Aparece en las dos listas críticas: corre rápido <b>y</b> pasa tiempo sin señal. Prioridad máxima.');
+  else if(v&&v.alertas>1000)L.push('Con ese volumen, es candidata directa a intervención con el piloto y revisión de ruta.');
+  else if(g)L.push(SABER.gps_muertas);
+  return L.join('\n');
+}
+function rCedi(c){
+  const cs=D.casos.filter(x=>x.planta_cedi===c);
+  const gs=D.top_gps.filter(x=>x.cedi===c);
+  const L=[`🏭 <b>${c}</b>:`,''];
+  L.push(`• Casos en la bitácora: <b>${cs.length}</b>${cs.length?' → '+cs.map(x=>x.id_caso).join(', '):''}.`);
+  if(gs.length)L.push(`• Unidades con GPS caído asignadas aquí: ${gs.map(g=>g.unidad+' ('+g.dias+' d)').join(', ')}.`);
+  if(cs.some(x=>/EPP/i.test(x.tipo_incidencia)))L.push('\n'+SABER.epp);
+  return L.join('\n');
+}
+function rResumen(){
+  const cx=ctxDatos();
+  const catTop=Object.entries(cx.porCat).sort((a,b)=>b[1]-a[1])[0];
+  const tv=D.top_vel[0], tg=D.top_gps[0];
+  return `📊 Panorama de junio${filtroTxt()}:
+
+• <b>${fnum(D.kpis.tot_jun)}</b> incidencias totales (${varTxt(D.kpis.tot_jun,D.kpis.tot_may)}).
+• El <b>${(D.kpis.vel_jun/D.kpis.tot_jun*100).toFixed(0)}%</b> son alertas de velocidad: ${fnum(D.kpis.vel_jun)}. Lo operativo en tu vista suma ${fnum(cx.totalOp)}.
+• Categoría dominante: <b>${catTop[0].replace('INCIDENCIAS ','').toLowerCase()}</b> con ${fnum(catTop[1])} eventos.
+• Unidad más crítica: <b>${tv.unidad}</b>, ${fnum(tv.alertas)} alertas ella sola.
+• Peor GPS: <b>${tg.unidad}</b> con ${tg.dias} días sin señal en ${tg.cedi}.
+
+${SABER.captura}`;
+}
+function rTendencia(){
+  const cx=ctxDatos();
+  const lin=cx.sems.map(s=>{
+    const op=cx.porSem[s]||0, ve=D.vel_semanal[s]||0;
+    const barra='▇'.repeat(Math.max(1,Math.round(op/25)));
+    return `  ${semLab(s)}  ${String(op).padStart(3)} oper. ${barra}  · ${fnum(ve)} velocidad`;
+  }).join('\n');
+  const vals=cx.sems.map(s=>cx.porSem[s]||0);
+  const pico=cx.sems[vals.indexOf(Math.max(...vals))];
+  return `📈 Semana a semana en junio${filtroTxt()}:
+
+${lin}
+
+El pico operativo fue la semana del <b>${semLab(pico)}</b>. ${SABER.gps_masivo} La última franja (29–30) son solo 2 días, por eso cae.`;
+}
+function rRecomendacion(){
+  const t=D.top_vel;
+  return `💡 Lo que haría con estos datos, en orden:
+
+<b>1. Intervención con 3 pilotos, no con la flota.</b> ${t[0].unidad}, ${t[1].unidad} y ${t[2].unidad} suman ${fnum(t[0].alertas+t[1].alertas+t[2].alertas)} alertas de las ${fnum(D.kpis.vel_jun)} del mes. ${SABER.vel_concentrada}
+
+<b>2. Depurar el parque GPS.</b> ${SABER.gps_muertas} Empezá por ${D.top_gps[0].unidad} (${D.top_gps[0].dias} días).
+
+<b>3. Reclamar al proveedor GPS.</b> ${SABER.gps_masivo} Con el detalle semanal en mano tenés el argumento.
+
+<b>4. EPP como prioridad A.</b> ${SABER.epp}`;
+}
+function rUnidades(){
+  const v=D.top_vel.slice(0,5).map((x,i)=>`  ${i+1}. ${x.unidad} — ${fnum(x.alertas)} alertas`).join('\n');
+  const g=D.top_gps.slice(0,5).map((x,i)=>`  ${i+1}. ${x.unidad} — ${x.dias} días (${x.cedi})`).join('\n');
+  const ambas=D.top_vel.filter(a=>D.top_gps.some(b=>b.unidad===a.unidad)).map(x=>x.unidad);
+  return `🚚 Unidades críticas de junio:
+
+<b>Por exceso de velocidad</b>
+${v}
+
+<b>Por GPS desconectado</b>
+${g}
+
+${ambas.length?'⚠️ Aparecen en ambas listas: <b>'+ambas.join(', ')+'</b>. Corren rápido y además no las vemos.':SABER.vel_concentrada}`;
+}
+function rGps(){
+  const l=D.top_gps.slice(0,5).map(g=>`  • ${g.unidad} — ${g.dias} días (${g.cedi})`).join('\n');
+  return `🛰️ Estado del GPS en junio:
+
+• Unidades fuera de servicio: <b>${fnum(D.kpis.gps_off_jun)}</b> registros (mayo: ${fnum(D.kpis.gps_off_may)} → ${varTxt(D.kpis.gps_off_jun,D.kpis.gps_off_may)}).
+• Las más graves:
+${l}
+
+${SABER.gps_masivo}
+
+${SABER.gps_muertas}`;
+}
+function rVelocidad(){
+  const cx=ctxDatos();
+  const sem=Object.entries(D.vel_semanal).sort((a,b)=>b[1]-a[1])[0];
+  return `🚨 Exceso de velocidad, junio:
+
+• Total del mes: <b>${fnum(D.kpis.vel_jun)}</b> alertas (${varTxt(D.kpis.vel_jun,D.kpis.vel_may)}).${filtroSem?`\n• En tu semana filtrada: ${fnum(cx.velTot)}.`:''}
+• Semana más alta: ${semLab(sem[0])} con ${fnum(sem[1])}.
+• Cabeza del ranking: <b>${D.top_vel[0].unidad}</b> (${fnum(D.top_vel[0].alertas)}) y ${D.top_vel[1].unidad} (${fnum(D.top_vel[1].alertas)}).
+
+${SABER.vel_concentrada}`;
+}
+function rPilotos(){
+  const tel=D.comparativo.find(c=>/TELEFONO/i.test(c.tipo));
+  const cs=D.casos.filter(c=>/PILOTO/i.test(c.categoria));
+  return `🧑‍✈️ Conducta de motoristas:
+
+• Uso de teléfono al conducir: <b>${fnum(tel?tel.JUNIO:0)}</b> casos en junio (mayo: ${fnum(tel?tel.MAYO:0)}).
+• En la bitácora detallada hay ${cs.length} casos de pilotos${cs.length?': '+cs.map(c=>c.id_caso).join(', '):''}, con foto de cabina.
+
+${SABER.telefono}`;
+}
+function rPlanta(){
+  const epp=D.comparativo.find(c=>/EPP|SIN EPP/i.test(c.tipo));
+  const cs=D.casos.filter(c=>/CEDI/i.test(c.categoria));
+  return `🏭 Planta y CEDIs:
+
+• Personal sin EPP: <b>${fnum(epp?epp.JUNIO:0)}</b> casos en junio.
+• Casos con evidencia fotográfica: ${cs.length}${cs.length?' → '+cs.map(c=>c.id_caso+' ('+(c.planta_cedi||'')+')').join('; '):''}.
+
+${SABER.epp}`;
+}
+function rCasos(){
+  const ab=D.casos.filter(c=>c.estado==='ABIERTO'), se=D.casos.filter(c=>c.estado==='EN SEGUIMIENTO');
+  const reales=D.casos.filter(c=>c.evidencia_real).length;
+  return `📋 Bitácora con ID de caso:
+
+• <b>${D.casos.length} casos</b> registrados · ${D.kpis.fotos} fotos de evidencia (${reales} extraídas del Excel original).
+• Abiertos: <b>${ab.length}</b>${ab.length?' ('+ab.map(c=>c.id_caso).join(', ')+')':''} · en seguimiento: ${se.length}.
+
+Cada foto se nombra con el ID del caso (${D.casos[0].id_caso}_01.jpg), así se ubica al instante desde cualquier buscador. Podés verlas todas en la pestaña 📸 Evidencias.`;
+}
+function rComparativo(){
+  const top=D.comparativo.slice(0,5).map(c=>{
+    const p=pctv(c.JUNIO,c.MAYO);
+    return `  • ${c.tipo.toLowerCase()}: ${c.MAYO} → <b>${c.JUNIO}</b>${p!==null&&isFinite(p)?' ('+(p>=0?'+':'')+p.toFixed(0)+'%)':''}`;
+  }).join('\n');
+  return `⚖️ Mayo vs junio:
+
+• Totales: ${fnum(D.kpis.tot_may)} → <b>${fnum(D.kpis.tot_jun)}</b> (${varTxt(D.kpis.tot_jun,D.kpis.tot_may)}).
+• Velocidad: ${fnum(D.kpis.vel_may)} → ${fnum(D.kpis.vel_jun)}. Operativas: ${fnum(D.kpis.oper_may)} → ${fnum(D.kpis.oper_jun)}.
+
+Principales tipos:
+${top}
+
+${SABER.captura}`;
+}
+function rCausa(){
+  return `🔍 Por qué se movieron los números:
+
+• <b>Incidencias operativas (${fnum(D.kpis.oper_may)} → ${fnum(D.kpis.oper_jun)}):</b> el salto viene casi todo de conexión GPS. ${SABER.gps_masivo}
+• <b>Velocidad (${varTxt(D.kpis.vel_jun,D.kpis.vel_may)}):</b> no es toda la flota. ${SABER.vel_concentrada}
+• <b>Unidades fuera de servicio (${D.kpis.gps_off_may} → ${D.kpis.gps_off_jun}):</b> arrastre acumulado. ${SABER.gps_muertas}
+
+${SABER.captura}`;
+}
+function rProyeccion(){
+  const v=D.semanas.map(s=>D.vel_semanal[s]||0).filter(x=>x>0);
+  const prom=v.slice(0,4).reduce((a,b)=>a+b,0)/Math.min(4,v.length);
+  return `📅 Estimación para julio (proyección simple, no predicción):
+
+• Con el ritmo de las semanas completas de junio (~${fnum(Math.round(prom))} alertas de velocidad por semana), julio cerraría cerca de <b>${fnum(Math.round(prom*4.3))}</b> si nada cambia.
+• Si se interviene a las 3 unidades top, el mes podría bajar del orden de ${fnum(Math.round(prom*4.3*0.7))}.
+
+Es aritmética sobre 5 semanas de datos, no un modelo: sirve para fijar meta, no para prometer resultados.`;
+}
+function rFiltros(){
+  const cx=ctxDatos();
+  return `👁️ Lo que estoy viendo ahora:
+
+• Categoría: <b>${filtroCat?filtroCat.replace('INCIDENCIAS ','').toLowerCase():'todas'}</b>
+• Semana: <b>${filtroSem?semLab(filtroSem):'todas las de junio'}</b>
+• Incidencias operativas en esta vista: <b>${fnum(cx.totalOp)}</b> · alertas de velocidad: ${fnum(cx.velTot)}.
+
+Cambiá los filtros de arriba y volveme a preguntar: recalculo todo sobre lo que quede en pantalla.`;
+}
+function rAyuda(){
+  return `Soy el analista del CMT. Trabajo <b>solo</b> con los datos de este panel y respeto tus filtros.
+
+Preguntame por ejemplo:
+  • "¿qué destaca?" o "resumime junio"
+  • "¿cómo va la tendencia por semana?"
+  • "dame recomendaciones"
+  • "¿cuáles son las unidades críticas?"
+  • "¿cómo está el GPS?" / "¿y la velocidad?"
+  • "¿por qué subieron las incidencias?"
+  • "contame de la unidad C425" o "¿qué pasa en CEDI Moncagua?"
+  • "¿cuántos casos abiertos hay?"`;
+}
+
+/* --- Orquestador --- */
+let ultimoTema=null;
+function motorLocal(q){
+  const e=entidades(q), d=detectar(q);
+  if(e.semana&&D.semanas.includes(e.semana)&&!filtroSem&&/semana/.test(norm(q))){
+    const i=D.semanas.indexOf(e.semana);
+    const op=Object.keys(D.trend_op).reduce((a,c)=>a+(D.trend_op[c][i]||0),0);
+    return `📅 Semana del ${semLab(e.semana)}: <b>${op}</b> incidencias operativas y ${fnum(D.vel_semanal[e.semana]||0)} alertas de velocidad.\n\nUsá el filtro de semana arriba si querés que todo el panel se centre en esa franja.`;
+  }
+  if(e.unidad&&(d.score<5||d.id==='unidades'))return rUnidad(e.unidad);
+  if(e.cedi&&(d.score<5||d.id==='planta'))return rCedi(e.cedi);
+
+  let id=d.id;
+  if(d.score<3){ // consulta corta o ambigua: seguimiento del último tema
+    if(ultimoTema&&/\b(y|entonces|ademas|mas|detalle|ampliar|profundiza)\b/.test(norm(q)))id=ultimoTema;
+  }
+  const R={saludo:()=>`¡Hola! Soy Tomzín. Ya tengo cargadas las medidas de junio${filtroTxt()}. ¿Querés el panorama general, la tendencia por semana o mis recomendaciones?`,
+    gracias:()=>'A la orden. Si querés, puedo profundizar en alguna categoría o en una unidad específica.',
+    ayuda:rAyuda,resumen:rResumen,tendencia:rTendencia,recomendacion:rRecomendacion,
+    unidades:rUnidades,gps:rGps,velocidad:rVelocidad,pilotos:rPilotos,planta:rPlanta,
+    casos:rCasos,comparativo:rComparativo,causa:rCausa,proyeccion:rProyeccion,filtros:rFiltros};
+  if(id&&R[id]){if(!['saludo','gracias','ayuda','filtros'].includes(id))ultimoTema=id;return R[id]();}
+  return `No estoy seguro de a qué te referís. Puedo analizarte: panorama general, tendencia semanal, recomendaciones, unidades críticas, GPS, velocidad, motoristas, planta/EPP, casos y evidencias, o comparar mayo con junio. También podés nombrarme una unidad o un CEDI.${filtroTxt()?' Estoy respetando tus filtros actuales.':''}`;
+}
+
+async function responder(q){
+  const t=burbuja('<div class="escribiendo"><span></span><span></span><span></span></div>','bot');
+  try{
+    const r=await fetch('http://localhost:8765/preguntar',{method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({pregunta:q,filtros:{categoria:filtroCat,semana:filtroSem},datos:{kpis:D.kpis,trend_op:D.trend_op,top_vel:D.top_vel,top_gps:D.top_gps,vel_semanal:D.vel_semanal,comparativo:D.comparativo,casos:D.casos.map(c=>({id:c.id_caso,tipo:c.tipo_incidencia,estado:c.estado}))}}),
+      signal:AbortSignal.timeout(20000)});
+    if(!r.ok)throw 0;
+    const j=await r.json();
+    tipear(t, j.respuesta.replace(/\*\*(.+?)\*\*/g,'<b>$1</b>'));
+  }catch(e){
+    setTimeout(()=>tipear(t, motorLocal(q)), 1500);
+  }
+}
+function preguntar(q){burbuja(q,'user');botEstado('scan');responder(q);}
+function enviar(){const i=document.getElementById('q');if(!i.value.trim())return;
+  preguntar(i.value.trim());i.value='';}
+
+
+/* ===== Tomzín Scanner: 3 diseños + máquina de estados ===== */
+const BOT_SVG=`<svg width="216" height="270" viewBox="0 0 220 270">
+    <defs>
+      <linearGradient id="blancoV" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#ffffff"/><stop offset="60%" stop-color="#e7ecf4"/><stop offset="100%" stop-color="#b6c1d2"/>
+      </linearGradient>
+      <linearGradient id="blancoV2" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#f7fafd"/><stop offset="100%" stop-color="#c9d3e2"/>
+      </linearGradient>
+      <radialGradient id="vidrioV" cx="38%" cy="32%" r="78%">
+        <stop offset="0%" stop-color="#20293c"/><stop offset="100%" stop-color="#04070d"/>
+      </radialGradient>
+      <radialGradient id="auV" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stop-color="#3b82f6" stop-opacity=".45"/><stop offset="100%" stop-color="#3b82f6" stop-opacity="0"/>
+      </radialGradient>
+      <linearGradient id="hazV" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%" stop-color="#22d3ee" stop-opacity=".45"/><stop offset="100%" stop-color="#22d3ee" stop-opacity="0"/>
+      </linearGradient>
+    </defs>
+    <ellipse class="aura" cx="110" cy="112" rx="102" ry="96" fill="url(#auV)"/>
+    <g class="flot">
+      <!-- anillos holograficos -->
+      <ellipse class="rot" cx="110" cy="66" rx="100" ry="24" fill="none" stroke="#22d3ee" stroke-width="1.3" stroke-dasharray="8 10" opacity=".5"/>
+      <ellipse class="rot2" cx="110" cy="66" rx="82" ry="40" fill="none" stroke="#3b82f6" stroke-width="1" stroke-dasharray="3 11" opacity=".35" transform="rotate(-12 110 66)"/>
+      <!-- ============ CABEZA FRONTAL (reposo / respuesta) ============ -->
+      <g class="cabF">
+        <path d="M70 16 L150 16 Q160 16 158 24 L156 28 L64 28 L62 24 Q60 16 70 16 Z" fill="url(#blancoV2)"/>
+        <rect x="38" y="24" width="144" height="84" rx="28" fill="url(#blancoV)"/>
+        <rect x="38" y="24" width="144" height="84" rx="28" fill="none" stroke="#9fabc0" stroke-width="1.4" opacity=".7"/>
+        <ellipse cx="66" cy="38" rx="22" ry="8" fill="#ffffff" opacity=".85"/>
+        <rect x="44" y="54" width="14" height="34" rx="7" fill="#16181e"/>
+        <circle class="led" cx="51" cy="62" r="2.6" fill="#22d3ee"/>
+        <circle class="led" cx="51" cy="71" r="2.6" fill="#3b82f6" style="animation-delay:.5s"/>
+        <circle class="led" cx="51" cy="80" r="2.6" fill="#22d3ee" style="animation-delay:1s"/>
+        <rect x="164" y="60" width="10" height="12" rx="4" fill="#16181e"/>
+        <circle class="antluz" cx="169" cy="66" r="3" fill="#22d3ee" style="filter:drop-shadow(0 0 6px #22d3ee)"/>
+        <circle cx="112" cy="65" r="46" fill="url(#blancoV2)"/>
+        <circle cx="112" cy="65" r="40" fill="#16181e"/>
+        <circle cx="112" cy="65" r="35" fill="url(#vidrioV)"/>
+        <g class="rot" opacity=".9">
+          <g fill="#0b1626">
+            <path d="M112 34 L122 58 L102 58 Z"/><path d="M112 96 L102 72 L122 72 Z"/>
+            <path d="M81 65 L105 55 L105 75 Z"/><path d="M143 65 L119 75 L119 55 Z"/>
+          </g>
+        </g>
+        <circle class="rot2" cx="112" cy="65" r="26" fill="none" stroke="#22d3ee" stroke-width="1.8" stroke-dasharray="10 7" opacity=".85"/>
+        <circle class="rot" cx="112" cy="65" r="18" fill="none" stroke="#3b82f6" stroke-width="1.5" stroke-dasharray="4 6" opacity=".85"/>
+        <circle class="iris" cx="112" cy="65" r="11" fill="var(--iris)" style="filter:drop-shadow(0 0 14px var(--iris))"/>
+        <circle cx="104" cy="56" r="4.5" fill="#fff" opacity=".9"/>
+        <circle class="pok" cx="112" cy="65" r="26" fill="none" stroke="#3b82f6" stroke-width="3"/>
+      </g>
+      <!-- ============ CABEZA DE PERFIL (escaneo, cabecea arriba/abajo) ============ -->
+      <g class="cabP">
+        <g class="cabeceo">
+          <!-- haz de escaneo que barre con la cabeza -->
+          <polygon points="178,66 258,30 258,102" fill="url(#hazV)"/>
+          <!-- housing bala de perfil -->
+          <path d="M62 46 Q52 46 52 58 L52 82 Q52 94 63 94 L158 100 Q168 100 168 88 L168 52 Q168 42 158 43 Z" fill="url(#blancoV)"/>
+          <line x1="86" y1="46" x2="88" y2="96" stroke="#9fabc0" stroke-width="1.4" opacity=".8"/>
+          <line x1="118" y1="45" x2="120" y2="98" stroke="#9fabc0" stroke-width="1.4" opacity=".8"/>
+        <!-- visera superior sobresaliente -->
+          <path d="M56 36 L186 44 L180 56 L56 47 Z" fill="url(#blancoV2)"/>
+          <!-- aro frontal + lente de perfil -->
+          <ellipse cx="170" cy="70" rx="11" ry="28" fill="url(#blancoV2)"/>
+          <ellipse cx="171" cy="70" rx="7.5" ry="22" fill="#16181e"/>
+          <ellipse class="iris" cx="172" cy="70" rx="4" ry="11" fill="var(--iris)" style="filter:drop-shadow(0 0 10px var(--iris))"/>
+          <!-- REC + detalles traseros -->
+          <circle class="antluz" cx="62" cy="58" r="4" fill="#ef4444" style="filter:drop-shadow(0 0 6px #ef4444);animation-duration:1.1s"/>
+          <circle class="led" cx="64" cy="82" r="2.6" fill="#22d3ee"/>
+          <line x1="52" y1="70" x2="44" y2="70" stroke="#16181e" stroke-width="5" stroke-linecap="round"/>
+        </g>
+        <!-- soporte fijo -->
+        <rect x="100" y="100" width="22" height="14" rx="6" fill="#16181e"/>
+      </g>
+      <!-- ============ CUELLO ============ -->
+      <rect x="98" y="108" width="28" height="12" rx="6" fill="#16181e"/>
+      <!-- CUERPO B ATLAS -->
+      <g class="girocuerpo">
+        <!-- traje interno oscuro -->
+        <path d="M110 118 C152 118 166 138 166 160 C166 192 148 210 128 216 Q110 220 92 216 C72 210 54 192 54 160 C54 138 68 118 110 118 Z" fill="#1a2030"/>
+        <!-- placas pectorales blancas (dos piezas) -->
+        <path d="M106 124 C82 124 66 136 64 154 C63 168 72 180 88 184 L104 186 L106 124 Z" fill="url(#blancoV)"/>
+        <path d="M114 124 C138 124 154 136 156 154 C157 168 148 180 132 184 L116 186 L114 124 Z" fill="url(#blancoV)"/>
+        <ellipse cx="84" cy="140" rx="12" ry="8" fill="#ffffff" opacity=".85"/>
+        <!-- nucleo entre placas -->
+        <circle class="antluz" cx="110" cy="156" r="6" fill="#22d3ee" style="filter:drop-shadow(0 0 10px #22d3ee)"/>
+        <!-- placas abdominales -->
+        <path d="M84 192 Q110 200 136 192 L133 204 Q110 211 87 204 Z" fill="url(#blancoV2)"/>
+        <path d="M88 208 Q110 215 132 208 L129 220 Q110 226 91 220 Z" fill="url(#blancoV2)"/>
+        <path d="M93 224 Q110 230 127 224 L124 234 Q110 239 96 234 Z" fill="url(#blancoV2)"/>
+        <!-- hombreras con lente naranja (ref 2) -->
+        <path d="M40 132 Q44 114 66 116 Q82 118 82 132 Q80 146 62 148 Q44 148 40 132 Z" fill="url(#blancoV2)"/>
+        <circle cx="60" cy="131" r="7.5" fill="#16181e"/>
+        <circle class="led" cx="60" cy="131" r="4.5" fill="#f59a1a" style="filter:drop-shadow(0 0 6px #f59a1a)"/>
+        <path d="M180 132 Q176 114 154 116 Q138 118 138 132 Q140 146 158 148 Q176 148 180 132 Z" fill="url(#blancoV2)"/>
+        <circle cx="160" cy="131" r="7.5" fill="#16181e"/>
+        <circle class="led" cx="160" cy="131" r="4.5" fill="#f59a1a" style="filter:drop-shadow(0 0 6px #f59a1a);animation-delay:.6s"/>
+        <!-- brazos segmentados -->
+        <path d="M54 150 Q42 162 42 178" fill="none" stroke="url(#blancoV2)" stroke-width="14" stroke-linecap="round"/>
+        <circle cx="42" cy="180" r="7" fill="#16181e"/>
+        <path d="M43 187 Q47 202 57 210" fill="none" stroke="url(#blancoV2)" stroke-width="13" stroke-linecap="round"/>
+        <line x1="45" y1="193" x2="52" y2="204" stroke="#1a2030" stroke-width="2" opacity=".7"/>
+        <circle cx="60" cy="214" r="9.5" fill="#16181e"/>
+        <path d="M54 210 l5 -2 M55 217 l6 -2 M59 222 l6 -2" stroke="#c9d3e2" stroke-width="2.2" stroke-linecap="round"/>
+        <path d="M166 150 Q178 162 178 178" fill="none" stroke="url(#blancoV2)" stroke-width="14" stroke-linecap="round"/>
+        <circle cx="178" cy="180" r="7" fill="#16181e"/>
+        <path d="M177 187 Q173 202 163 210" fill="none" stroke="url(#blancoV2)" stroke-width="13" stroke-linecap="round"/>
+        <line x1="175" y1="193" x2="168" y2="204" stroke="#1a2030" stroke-width="2" opacity=".7"/>
+        <circle cx="160" cy="214" r="9.5" fill="#16181e"/>
+        <path d="M166 210 l-5 -2 M165 217 l-6 -2 M161 222 l-6 -2" stroke="#c9d3e2" stroke-width="2.2" stroke-linecap="round"/>
+        <ellipse cx="110" cy="252" rx="34" ry="7" fill="none" stroke="#22d3ee" stroke-width="2.5" opacity=".8" style="filter:drop-shadow(0 0 9px #22d3ee)"/>
+      </g>
+    </g>
+    <ellipse cx="110" cy="267" rx="60" ry="5" fill="#3b82f6" opacity=".25"/>
+  </svg>`;
+const botv=document.getElementById('botv');
+document.getElementById('bot-svg').innerHTML=BOT_SVG;
+const LBLBOT={idle:'EN ESPERA',scan:'ESCANEANDO...',ready:'RESPUESTA LISTA'};
+let botTimer=null;
+function botEstado(st){clearTimeout(botTimer);
+  botv.classList.remove('st-idle','st-scan','st-ready');void botv.offsetWidth;
+  botv.classList.add('st-'+st);
+  document.getElementById('bot-lbl').textContent=LBLBOT[st];
+  if(st==='ready')botTimer=setTimeout(()=>botEstado('idle'),2800);}
+(function(){const cv=botv.querySelector('canvas'),ctx=cv.getContext('2d');const cx=cv.width/2,cy=88;
+const P=[...Array(24)].map(()=>({x:Math.random()*cv.width,y:Math.random()*cv.height,
+  v:.15+Math.random()*.45,r:.8+Math.random()*1.6,h:Math.random()<.7?'#22d3ee':'#3b82f6'}));
+(function paso(){ctx.clearRect(0,0,cv.width,cv.height);
+const scan=botv.classList.contains('st-scan'),ready=botv.classList.contains('st-ready');
+for(const p of P){
+  if(scan){const dx=cx-p.x,dy=cy-p.y,d=Math.hypot(dx,dy)||1;p.x+=dx/d*2.4;p.y+=dy/d*2.4;
+    if(d<12){p.x=Math.random()*cv.width;p.y=cv.height-Math.random()*50;}}
+  else if(ready){const dx=p.x-cx,dy=p.y-cy,d=Math.hypot(dx,dy)||1;p.x+=dx/d*1.6;p.y+=dy/d*1.6;
+    if(p.x<0||p.x>cv.width||p.y<0||p.y>cv.height){p.x=cx+(Math.random()-.5)*30;p.y=cy+(Math.random()-.5)*30;}}
+  else{p.y-=p.v;if(p.y<0){p.y=cv.height;p.x=Math.random()*cv.width;}}
+  ctx.globalAlpha=scan?.95:.45;ctx.fillStyle=p.h;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,7);ctx.fill();}
+requestAnimationFrame(paso);})();})();
+
+/* ===== Init ===== */
+aplicarTema(temaGuardado());renderTable();saludo();actualizarCtx();
+const ahora=new Date();
+document.getElementById('upd').textContent=ahora.toLocaleDateString('es-SV')+' '+ahora.toLocaleTimeString('es-SV',{hour:'2-digit',minute:'2-digit'});
+document.getElementById('gen').textContent=ahora.toLocaleDateString('es-SV');
+document.getElementById('ft-fotos').textContent=D.kpis.fotos;
+</script>
+</body>
+</html>
