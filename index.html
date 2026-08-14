@@ -499,7 +499,7 @@ D.semanas.forEach(s=>{const o=document.createElement('option');o.value=s;
 fCat.addEventListener('change',()=>{filtroCat=fCat.value;renderTrend();renderTable();actualizarCtx();});
 fSem.addEventListener('change',()=>{filtroSem=fSem.value;renderTrend();actualizarCtx();});
 
-/* ===== TOMZÍN — analista de los datos en pantalla ===== */
+/* ===== TOM — analista de los datos en pantalla ===== */
 const chat=document.getElementById('chat');
 function burbuja(html,quien){const d=document.createElement('div');d.className='msg '+quien;
   d.innerHTML=html;chat.appendChild(d);chat.scrollTop=chat.scrollHeight;return d;}
@@ -512,7 +512,7 @@ function tipear(el,html){ // efecto de escritura futurista
     if(i<plano.length)setTimeout(paso,24);else{el.innerHTML=html;botEstado('ready');}};
   paso();
 }
-function saludo(){burbuja(`¡Hola! Soy <span class="nm">Tomzín</span>, tu analista del CMT. Estoy conectado a las medidas de este panel y <b>respeto los filtros que apliques</b>. Preguntame: tendencias, unidades críticas, GPS o recomendaciones.`,'bot');}
+function saludo(){burbuja(`¡Hola! Soy <span class="nm">Tom</span>, tu analista del CMT. Estoy conectado a las medidas de este panel y <b>respeto los filtros que apliques</b>. Preguntame: tendencias, unidades críticas, GPS o recomendaciones.`,'bot');}
 function limpiarChat(){chat.innerHTML='';saludo();}
 function actualizarCtx(){
   const chips=['JUNIO',filtroCat?filtroCat.replace('INCIDENCIAS ',''):'Todas las categorías',
