@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CMT TOMZA · Panel de Incidencias</title>
+<title>CMT  · Panel de Incidencias</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1"></script>
 <style>
 :root{
@@ -107,7 +107,7 @@ tr:hover td{background:rgba(56,189,248,.05)}
 .idlink{color:var(--rosa);font-weight:700;text-decoration:none;font-family:var(--mono)}
 .idlink:hover{text-shadow:0 0 10px rgba(255,45,120,.8)}
 
-/* ============ TOMZÍN HOLOGRÁFICO ============ */
+/* ============ TOM HOLOGRÁFICO ============ */
 .ia{position:relative;margin-top:20px;border-radius:18px;overflow:hidden;
   background:var(--panel);border:1px solid var(--line);opacity:0;transform:translateY(18px)}
 .ia.show{animation:rise .7s forwards}
@@ -195,7 +195,7 @@ tr:hover td{background:rgba(56,189,248,.05)}
 .modo b{color:var(--verde)}
 
 
-/* ===== Tomzín Scanner: componente con estados ===== */
+/* ===== Tom Scanner: componente con estados ===== */
 .botv{position:relative;width:230px;height:284px;display:grid;place-items:center;
   --vel:9s;--vel2:14s;--iris:#22d3ee;--intens:.4}
 .botv canvas{position:absolute;inset:0;pointer-events:none}
@@ -258,7 +258,7 @@ footer{margin-top:20px;padding:14px 4px;display:flex;justify-content:space-betwe
   <div class="brand">
     <span class="flame">🔥</span>
     <div>
-      <h1>Centro de Monitoreo TOMZA · Incidencias</h1>
+      <h1>Centro de Monitoreo  · Incidencias</h1>
       <div class="sub">DEMO KPI's GLOBALES · mayo–junio 2026</div>
     </div>
   </div>
@@ -317,13 +317,13 @@ footer{margin-top:20px;padding:14px 4px;display:flex;justify-content:space-betwe
   </table></div>
 </div>
 
-<!-- ================= TOMZÍN v3 HOLOGRÁFICO ================= -->
+<!-- ================= TOM v3 HOLOGRÁFICO ================= -->
 <section class="ia anim" id="seccion-ia">
   <div class="malla"></div><div class="scan"></div>
   <span class="esq a"></span><span class="esq b"></span><span class="esq c"></span><span class="esq d"></span>
   <div class="ia-head">
     <div class="tt"><span class="pulso"></span>
-      <div>NÚCLEO DE ANÁLISIS · TOMZÍN<small>IA conectada a las medidas en pantalla · v3.0</small></div>
+      <div>NÚCLEO DE ANÁLISIS · TOM<small>IA conectada a las medidas en pantalla · v3.0</small></div>
     </div>
     <div style="display:flex;gap:14px;align-items:center">
       <div class="leds"><span class="led"></span><span class="led"></span><span class="led"></span></div>
@@ -334,7 +334,7 @@ footer{margin-top:20px;padding:14px 4px;display:flex;justify-content:space-betwe
     <div class="nucleo">
       <div class="botv st-idle" id="botv"><canvas width="230" height="280"></canvas><div id="bot-svg"></div>
         <div class="estado-lbl" id="bot-lbl">EN ESPERA</div></div>
-            <div class="nombre-bot"><b>TOMZÍN</b> · escáner en línea</div>
+            <div class="nombre-bot"><b>TOM</b> · escáner en línea</div>
     </div>
     <div class="chat" id="chat"></div>
   </div>
@@ -355,7 +355,7 @@ footer{margin-top:20px;padding:14px 4px;display:flex;justify-content:space-betwe
 </section>
 
 <footer>
-  <span>TOMZA EL SALVADOR · CMT · Demo v3</span>
+  <span>EL SALVADOR · CMT · Demo v3</span>
   <span>📷 <span id="ft-fotos"></span> evidencias · Generado <span id="gen"></span></span>
 </footer>
 </div>
@@ -520,7 +520,7 @@ function actualizarCtx(){
     'Alertas Velocidad','Unidades GPS','Bitácora '+D.casos.length+' casos','Comparativo Mayo'];
   document.getElementById('ctx-chips').innerHTML=chips.map(c=>`<span class="ctx">${c}</span>`).join(' ');
 }
-/* ================= TOMZÍN · MOTOR ANALÍTICO ==================
+/* ================= TOM· MOTOR ANALÍTICO ==================
    Analiza la pregunta (intención + entidades) y calcula la
    respuesta sobre los datos visibles, respetando los filtros.
    Los análisis cualitativos están pre-escritos sobre estos
